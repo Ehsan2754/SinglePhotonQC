@@ -1,0 +1,23 @@
+{% extends 'base.html' %}
+{% block title%}
+Dashboard
+{% endblock %}
+
+{% block body%}
+<div class="form">
+    <header id="header">
+        <h1>Single Photon QC Laboratory</h1>
+        <h2>Dashboard</h2>
+    </header>
+
+    <form method="POST">
+        <input type="text" name="u" placeholder="Username" required="required" />
+        <input type="password" name="p" placeholder="Password" required="required" />
+        <button type="submit" class="btn btn-primary btn-block btn-large">Login</button>
+        <button type="button" class="btn btn-primary btn-block btn-large">Forgot my password</button>
+    </form>
+    Ehsan Shaghaei<br>
+    <a href="https://github.com/Ehsan2754/contactlist">Github Repository</a><br>
+    <a href="mailto:Ehsan2754@yahoo.com">Ehsan2754@yahoo.com</a>
+</div>
+{% endblock %}
