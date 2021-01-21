@@ -73,11 +73,11 @@ Dashboard
                     <tr>
                         <td>{{ item.id }}</td>
                         <td>{{ item.dest }}</td>
-                        <td>{{ item.dest }}</td>
-                        <td>{{ item.dest }}</td>
+                        <td>{{ item.values }}</td>
+                        <td>{{ item.date }}</td>
                         <td>
                             <button class="btn btn-primary btn-block btn-large">Load</button> <br>
-                            <a href="/update/{{ person.id }}">Load</a>
+                            <a href="/update/{{ history.id }}">Load</a>
                         </td>
                     </tr>
                     {% endfor %}

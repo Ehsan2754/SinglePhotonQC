@@ -6,6 +6,7 @@ from flask_sqlalchemy import SQLAlchemy
 # from flask_restful import Api,Resource
 # ----------- Global Variables
 app = Flask(__name__)
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///history.db'
 db = SQLAlchemy(app)
 
@@ -17,10 +18,10 @@ class History(db.Model):
     dest = db.Column(db.String(15), nullable=False)
     nValues = db.Column(db.Integer, nullable=False)
     values = db.relationship('Values', backref='owner')
-    date = datetime.utcnow
+    date = db.Column(db.DateTime, default=datetime.utcnow)
 
-    def __str__(self):
-        return '+<{}><{}><{}><{}>'.format(self.id, self.dest, self.date,values)
+    def __repr__(self):
+        return '+<{}><{}><{}><{}>'.format(self.id, self.dest, self.date,self.values)
 
 
 class Values(db.Model):
@@ -28,7 +29,9 @@ class Values(db.Model):
     history_id = db.Column(db.Integer, db.ForeignKey('history.id'))
     coefficient = db.Column(db.Integer, nullable=False)
     parameter = db.Column(db.Integer, nullable=False)
-
+    def __repr__(self):
+        return '<p={}c={}>:'.format(self.parameter, self.coefficient)
+  
 
 # ----------- REST-FUL API SERVICE
 @app.route('/', methods=['POST', 'GET'])
@@ -64,9 +67,9 @@ def acknowledge():
 # ----------- MAIN
 if __name__ == "__main__":
     welcome()
-    print(os.system(cmd.TUNNEL_CMD))
+    # print(os.system(cmd.TUNNEL_CMD))
     # input('#### PRESS ANY KEY ####')
-    try:
-        app.run(debug=True)
-    except Exception as ex:
-        print('\t >> ERR: ' + ex)
+    app.run(debug=True)
+    # try:
+    # except Exception as ex:
+    #     print('\t >> ERR: ' + ex)
