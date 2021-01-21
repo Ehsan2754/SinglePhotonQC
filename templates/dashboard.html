@@ -9,13 +9,83 @@ Dashboard
         <h1>Single Photon QC Laboratory</h1>
         <h2>Dashboard</h2>
     </header>
+<main>
+    <section>
+        <div id="column1">
+            <form action="/plot" method="POST">
+                <div style="padding: 2%;">
+                    <label>Gaussian Waist Beam values</label>
+                    <input type="number" name="w" placeholder="Gaussian Waist Beam" required="required" />
+                    <label>#Lagurrel-Gussian parameters</label>
+                    <input type="number" name="nLG" placeholder="#Lagurrel-Gussian parameter" required="required"
+                        value="1" min="1" id="nLG" />
+                    <label>Lagurrel-Gussian Values</label>
+                </div>
+                <div id="parm">
+                    <input type="number" name="LG1" placeholder="L-G parameter1" required="required" />
+                    <input type="number" name="C1" placeholder="L-G Coefficient1" required="required" />
+                </div>
+                <button type="submit" class="btn btn-primary btn-block btn-large">Plot</button>
 
-    <form method="POST">
-        <input type="text" name="u" placeholder="Username" required="required" />
-        <input type="password" name="p" placeholder="Password" required="required" />
-        <button type="submit" class="btn btn-primary btn-block btn-large">Login</button>
-        <button type="button" class="btn btn-primary btn-block btn-large">Forgot my password</button>
-    </form>
+            </form>
+            <script>
+                document.getElementById("nLG").onchange = function () {
+                    document.getElementById("parm").innerHTML = ''
+                    for (i = 0; i < document.getElementById("nLG").value; i++) {
+                        document.getElementById("parm").innerHTML += `
+                        <input type="number" name="LG${i + 1}" placeholder="L-G parameter${i + 1}" required="required" />
+                        <br>
+                        <input type="number" name="C${i + 1}" placeholder="L-G Coefficient${i + 1}" required="required" />
+                        <br>
+                        `
+                    }
+                };
+
+            </script>
+        </div>
+        <div id="column2"></div>
+    </section>
+    <section>
+        <div class="column1">
+            <form action='/slm' method="POST">
+                <label for="slm">Choose a SLM device:</label>
+                <select style="width: 48%;" id="slm" name="slm">
+                    <option value="volvo">Volvo</option>
+                    <option value="saab">Saab</option>
+                    <option value="fiat">Fiat</option>
+                    <option value="audi">Audi</option>
+                </select>
+                <button action="\slm" type="submit" class="btn btn-primary btn-block btn-large">Upload to SLM</button>
+                <a method="POST" href='\refreshSLM'  class="btn btn-primary btn-block btn-large">Refresh</a>
+            </form>
+        </div>
+        <div class="column2"> {% if history|length < 1 %} <h5> No Logged information.</h5>
+                {% else %}
+                <table>
+                    <tr>
+                        <th>ID</th>
+                        <th>Destionation</th>
+                        <th>Values</th>
+                        <th>Created Date</th>
+                        <th>Actions</th>
+                    </tr>
+                    {% for item in history: %}
+                    <tr>
+                        <td>{{ item.id }}</td>
+                        <td>{{ item.dest }}</td>
+                        <td>{{ item.dest }}</td>
+                        <td>{{ item.dest }}</td>
+                        <td>
+                            <button class="btn btn-primary btn-block btn-large">Load</button> <br>
+                            <a href="/update/{{ person.id }}">Load</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </table>
+                {% endif %}</div>
+    </section>
+</main>
+
     Ehsan Shaghaei<br>
     <a href="https://github.com/Ehsan2754/contactlist">Github Repository</a><br>
     <a href="mailto:Ehsan2754@yahoo.com">Ehsan2754@yahoo.com</a>
