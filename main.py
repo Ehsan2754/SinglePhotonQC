@@ -14,12 +14,20 @@ db = SQLAlchemy(app)
 # ----------- BOT-ACTIVATION
 # ----------- Classes
 class History(db.Model):
+    # identification
     id = db.Column(db.Integer, primary_key=True)
+    # --- destination SLM
     dest = db.Column(db.String(15), nullable=False)
-    nValues = db.Column(db.Integer, nullable=False)
+    # --- Number of parameters for LG
+    nValues = db.Column(db.Float, nullable=False)
+    # --- values for LG parameters
     values = db.relationship('Values', backref='owner')
+    # --- Creation Date
     date = db.Column(db.DateTime, default=datetime.utcnow)
-
+    # TO-DO :
+    # add the scanning parameters(x,y)
+    # image
+    # loading option 
     def __repr__(self):
         return '+<{}><{}><{}><{}>'.format(self.id, self.dest, self.date,self.values)
 
@@ -27,8 +35,8 @@ class History(db.Model):
 class Values(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     history_id = db.Column(db.Integer, db.ForeignKey('history.id'))
-    coefficient = db.Column(db.Integer, nullable=False)
-    parameter = db.Column(db.Integer, nullable=False)
+    coefficient = db.Column(db.Float, nullable=False)
+    parameter = db.Column(db.Float, nullable=False)
     def __repr__(self):
         return '<p={}c={}>:'.format(self.parameter, self.coefficient)
   
@@ -41,7 +49,7 @@ def index():
     else:
         history = History.query.order_by(History.date).all()
         print(history)
-        return render_template('dashboard.html',history=history)
+        return render_template('dashboard.html',history=history,i=4)
 
 
 @app.route('/plot', methods=['POST'])
