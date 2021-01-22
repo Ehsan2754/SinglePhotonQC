@@ -15,32 +15,36 @@ Dashboard
                 <form action="/plot" method="POST">
                     <div style="padding: 2%;">
                         <label>Gaussian Waist Beam values</label>
-                        <input type="number" name="w" placeholder="Gaussian Waist Beam" required="required" />
+                        <input type="number" name="w" placeholder="Gaussian Waist Beam" required="required" value="{{ preload.gussianWaist }}" />
                         <label>#Lagurrel-Gussian parameters</label>
                         <input type="number" name="nLG" placeholder="#Lagurrel-Gussian parameter" required="required"
-                            value="{{ history[0].nValues }}" min="1" id="nLG" />
+                            value="{{ preload.nValues }}" min="1" id="nLG" />
                         <label>Lagurrel-Gussian Values</label>
                     </div>
                     <div id="parm">
-                        {% if history[0].nValues < 1 %} <h5> Invalid quantity of parameters.</h5>
+                        {% if preload.nValues < 1 %} <h5> Invalid quantity of parameters.</h5>
                             {% else %}
-                            {% for item in range(history[0].nValues): %}
+                            {% for item in range(preload.nValues): %}
                             <input type="number" 
                                 name="LG{{ item+1 }}" 
                                 placeholder="L-G parameter{{ item+1 }}" 
                                 required="required" 
-                                value="{{ history[0].values[item].parameter }}" />
+                                value="{{ preload.values[item].parameter }}" />
                                 <br>
                             <input type="number"
                                 name="C{{ item+1 }}"
                                 placeholder="L-G Coefficient{{ item+1 }}"
                                 required="required"
                                 oninput="this.value = Math.abs(this.value)"
-                                value="{{ history[0].values[item].coefficient }}" />
+                                value="{{ preload.values[item].coefficient }}" />
                                 <br>
                             {% endfor %}
                             {% endif %}
                     </div>
+                    <label>Scanning Postion</label>
+                    <input type="number" name="w" placeholder="Scanning Postion" required="required" value="{{ preload.scanPos }}" />
+                    <label>Scanning Range</label>
+                    <input type="number" name="w" placeholder="Scanning Range" required="required" value="{{ preload.scanRange }}" />
                     <button type="submit" class="btn btn-primary btn-block btn-large">Plot</button>
 
                 </form>
@@ -59,30 +63,38 @@ Dashboard
                     };
                 </script>
             </div>
-            <div id="column2"></div>
+            <div id="column2">
+                <img src="data:image/bmp;base64," width="100%" height="100%" />
+            </div>
         </section>
         <section>
             <div class="column1">
                 <form action='/slm' method="POST">
+                    {% if devices|length < 1 %} <h5> No devices found. </h5>
+                    {% else %}
                     <label for="slm">Choose a SLM device:</label>
                     <select style="width: 48%;" id="slm" name="slm">
-                        <option value="volvo">Volvo</option>
-                        <option value="saab">Saab</option>
-                        <option value="fiat">Fiat</option>
-                        <option value="audi">Audi</option>
+                        {% for item in devices %}
+                        <option value="{{item}}">{{item}}</option>
+                        {% endfor %}
                     </select>
+                    {% endif %}
                     <button action="\slm" type="submit" class="btn btn-primary btn-block btn-large">Upload to
                         SLM</button>
                     <a method="POST" href='\refreshSLM' class="btn btn-primary btn-block btn-large">Refresh</a>
                 </form>
             </div>
-            <div class="column2"> {% if history|length < 1 %} <h5> No Logged information.</h5>
+            <div class="column2"> {% if history|length < 1 %} <h5> No Logged information. </h5>
                     {% else %}
                     <table>
                         <tr>
                             <th>ID</th>
                             <th>Destionation</th>
-                            <th>Values</th>
+                            <th>Gaussian Waist</th>
+                            <th>#L-G parameters</th>
+                            <th>L-G parameters</th>
+                            <th>Scanning Postion</th>
+                            <th>Scanning Scroll</th>
                             <th>Created Date</th>
                             <th>Actions</th>
                         </tr>
@@ -90,7 +102,11 @@ Dashboard
                         <tr>
                             <td>{{ item.id }}</td>
                             <td>{{ item.dest }}</td>
+                            <td>{{ item.gussianWaist }}</td>
+                            <td>{{ item.nValues }}</td>
                             <td>{{ item.values }}</td>
+                            <td>{{ item.scanPos }}</td>
+                            <td>{{ item.scanRange }}</td>
                             <td>{{ item.date }}</td>
                             <td>
                                 <!-- <button class="btn btn-primary btn-block btn-large">Load</button> <br> -->
