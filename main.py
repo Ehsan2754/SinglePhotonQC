@@ -11,12 +11,15 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///history.db'
 db = SQLAlchemy(app)
 DEFAULT_IMG = 'img/default.jpg'
 TMP_IMG = 'img/tmp.bmp'
-
+UNSAVED = False
+SAVED = True
 
 
 # ----------- BOT-ACTIVATION
 # ----------- Classes
 class History(db.Model):
+    # --- TEMPERORAY STATUS IN DB
+    status = UNSAVED
     # identification
     id = db.Column(db.Integer, primary_key=True)
     # --- destination SLM
@@ -39,18 +42,29 @@ class History(db.Model):
     # image
     # loading option
     def __repr__(self):
-        return '+<{}><{}><{}><{}>'.format(self.id, self.dest, self.date,
-                                          self.values)
+        return '''
+        <{0}>
+        <{1}>
+        <{2}>
+        <{3}>
+        <{4}>
+        <{5}>
+        <{6}>
+        <{7}>
+        '''.format(self.id,self.date,self.dest,self.gussianWaist,self.scanPos,self.scanRange,str(self.nValues),self.values)
 
 
 class Values(db.Model):
+    status = UNSAVED
     id = db.Column(db.Integer, primary_key=True)
     history_id = db.Column(db.Integer, db.ForeignKey('history.id'))
     coefficient = db.Column(db.Float, nullable=False)
     parameter = db.Column(db.Float, nullable=False)
+    index = db.Column(db.Integer,nullable=False)
+
 
     def __repr__(self):
-        return '<p={}c={}>:'.format(self.parameter, self.coefficient)
+        return '<i={},p={},c={}>'.format(self.index, self.parameter, self.coefficient)
 
 
 # ----------- Constants
@@ -61,8 +75,7 @@ INIT_form = History(id=0,
                     scanPos=None,
                     scanRange=None)
 TMP_history = History()
-TMP_history_flg = False
-
+TMP_values = []
 # ----------- REST-FUL API SERVICE
 @app.route('/', methods=['POST', 'GET'])
 def index():
@@ -80,33 +93,33 @@ def index():
 
 @app.route('/plot', methods=['POST'])
 def plot():
-    TMP_form = {}
-    TMP_val = []
-    content = request.form
-    TMP_form.clear()
-    TMP_val.clear()
-    for item in content:
-        TMP_form[item] = content[item]
-    for i in range(int(TMP_form['nLG'])):
-        TMP_val.append(
-            (
-                float(TMP_form.pop('LG{}'.format(i + 1)))
+    form = request.form
+    content={}
+    for item in form:
+        content[item] = form[item]
+    TMP_values.clear()
+    TMP_history = History(
+                gussianWaist=float(content['w']),
+                nValues=int(content['nLG']),
+                scanPos=int(content['ScPo']),
+                scanRange=int(content['ScRa']),
+                status=UNSAVED
+                )
+    for i in range(int(content['nLG'])):
+        TMP_values.append(
+            Values(
+                index = int(i+1)
             ,
-                float(TMP_form.pop('C{}'.format(i + 1)))
+                coefficient=float(content.pop('C{}'.format(i + 1)))
+            ,
+                parameter=float(content.pop('LG{}'.format(i + 1)))
+            ,
+                owner=TMP_history
             )           
         )
-    print(TMP_form, TMP_val)
-    TMP_history = History(gussianWaist=float(TMP_form['w']),
-                nValues=int(TMP_form['nLG']),
-                values=[
-                Values(
-                    coefficient=float(item[1]),
-                    parameter=float(item[0])
-                ) for item in TMP_val
-                ],
-                scanPos=int(TMP_form['ScPo']),
-                scanRange=int(TMP_form['ScRa']))
+    print(TMP_history)
     history = History.query.order_by(History.date).all()
+    # return str(TMP_history)
     return render_template('dashboard.html',
                                history=history,
                                preload=TMP_history,
