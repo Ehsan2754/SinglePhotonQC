@@ -1,5 +1,4 @@
 import time,os,pip._vendor.requests as requests
-from main import History,Values
 # --- CONSTANTS 
 TGbot_TOKEN = 1
 TUNNEL_CMD = 'ngrok.exe authtoken 1dQueKHOQWNNi5epQPMNhGfivjr_bhSPj14GGVekGETLre7j'
@@ -13,11 +12,6 @@ def welcome():
     print('$$$ AUTHOR: Ehsan Shaghaei $$$')
     print('$$$   Ehsan2754@yahoo.com  $$$')
     print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
-INIT_form = History(gussianWaist = None,
-                        nValues = 1,
-                        values=[Values(parameter = None,coefficient = None)],
-                        scanPos = None,
-                        scanRange = None )
 def getDevices():
     return [1,2,3]
 
