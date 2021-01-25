@@ -55,9 +55,9 @@ Dashboard
                         document.getElementById("parm").innerHTML = ''
                         for (i = 0; i < document.getElementById("nLG").value; i++) {
                             document.getElementById("parm").innerHTML += `
-                        <input type="number" name="LG${i + 1}" placeholder="L-G parameter${i + 1}" required="required" />
+                        <input type="number" name="LG${i + 1}" placeholder="L-G parameter${i + 1}"  step="any" required="required" />
                         <br>
-                        <input type="number" name="C${i + 1}" placeholder="L-G Coefficient${i + 1}" required="required" />
+                        <input type="number" name="C${i + 1}" placeholder="L-G Coefficient${i + 1}" step="any" required="required" />
                         <br>
                         `
                         }
@@ -65,7 +65,7 @@ Dashboard
                 </script>
             </div>
             <div id="column2">
-                <img width="100%" height="100%" src= "{{ path }}"
+                <img width="100%" height="100%" src= "data:image/png;base64,{{ preload.image.decode('ascii') }}"
                 onerror=" this.onerror=null; this.src=`{{ url_for( 'static' , filename = 'img/default.jpg') }}`; "/>
             </div>
         </section>
@@ -109,11 +109,11 @@ Dashboard
                             <td>{{ item.values }}</td>
                             <td>{{ item.scanPos }}</td>
                             <td>{{ item.scanRange }}</td>
-                            <td>{{ item.date }}</td>
+                            <td>{{ item.date.date() }}</td>
                             <td>
                                 <!-- <button class="btn btn-primary btn-block btn-large">Load</button> <br> -->
-                                <a href="/load/{{ history.id }}">Load</a>
-                                <a href="/delete/{{ history.id }}">Load</a>
+                                <a href="/load/{{ item.id }}">Load</a>
+                                <a href="/delete/{{ item.id }}">Delete</a>
                             </td>
                         </tr>
                         {% endfor %}

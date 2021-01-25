@@ -144,6 +144,12 @@ a, .form h2 {
     letter-spacing: 1px;
     text-align: left;
 }
+header{
+    height: 10%;
+}
+main{
+    height: 90%;
+}
 
 input {
     width: 100%;
@@ -167,6 +173,8 @@ input {
 table{
     text-align-last: center;
     border: #f5f5f5 1px solid ;
+    overflow:scroll;
+    
     
 }
 label,tr,td {
@@ -187,12 +195,12 @@ input:focus {
 section {
     display: flex;
     flex-direction: row;
-    overflow: auto;
+    
 }
 
 section>div:nth-child(1) {
     font-size: 12px;
-    width: 40%;
+    width: 30%;
 }
 
 section>div:nth-child(2) {
@@ -216,4 +224,7 @@ footer {
     text-align: right;
     font-size: 14px;
     bottom: -80px;
+}
+.column2{
+    overflow: auto;
 }
