@@ -2,10 +2,12 @@ import time, os, json, base64
 import src
 from datetime import datetime
 from flask import Flask, render_template, url_for, request, redirect
+from flask_ngrok import run_with_ngrok
 from flask_sqlalchemy import SQLAlchemy
 # from flask_restful import Api,Resource
 # ----------- Global Variables
 app = Flask(__name__)
+run_with_ngrok(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///history.db'
 db = SQLAlchemy(app)
@@ -98,6 +100,7 @@ def index():
         print(history)
         # Clear the TMP image
         return render_template('dashboard.html',
+                               user = 'Ethan',
                                history=history,
                                preload=INIT_form,
                                devices=src.getDevices())
@@ -193,7 +196,7 @@ if __name__ == "__main__":
     src.welcome()
     # print(os.system(src.TUNNEL_CMD))
     # input('#### PRESS ANY KEY ####')
-    app.run(debug=True)
+    app.run()
     # try:
     # except Exception as ex:
     #     print('\t >> ERR: ' + ex)
