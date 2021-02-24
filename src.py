@@ -1,5 +1,6 @@
 import time,os,pip._vendor.requests as requests
 import base64
+import numpy as np
 # --- CONSTANTS 
 TGbot_TOKEN = 1
 TUNNEL_CMD = 'ngrok.exe authtoken 1dQueKHOQWNNi5epQPMNhGfivjr_bhSPj14GGVekGETLre7j'
@@ -17,4 +18,10 @@ def getDevices():
     return [1,2,3]
 def getB64string(bin):
     return base64.b64encode(bin)
+def create_axis(percision,shift):
+    x = -percision/2
+    output = np.array(percision*[0])
+    for i in range(percision):
+        output[i] = x+i+shift
+    return output
 
