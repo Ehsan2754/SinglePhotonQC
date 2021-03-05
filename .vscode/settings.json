@@ -15,5 +15,6 @@
             "password": "postgres"
         }
     ],
-    "sqltools.useNodeRuntime": true
+    "sqltools.useNodeRuntime": true,
+    "jupyter.jupyterServerType": "local"
 }

@@ -18,10 +18,13 @@ def getDevices():
     return [1,2,3]
 def getB64string(bin):
     return base64.b64encode(bin)
-def create_axis(percision,shift):
+def getAxis(magnitute,shift):
+    return np.linspace(-1*magnitute/2+shift,magnitute/2+shift-1,magnitute)
+def lagurrelGussian(percision,shift):
     x = -percision/2
     output = np.array(percision*[0])
     for i in range(percision):
         output[i] = x+i+shift
     return output
-
+def getSuperPosition():
+    pass
