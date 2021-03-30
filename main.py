@@ -4,6 +4,8 @@ from datetime import datetime
 from flask import Flask, render_template, url_for, request, redirect,session
 from flask_ngrok import run_with_ngrok
 from flask_sqlalchemy import SQLAlchemy
+# from flask.ext.session import Session
+from sqlalchemy_utils import IPAddressType
 import numpy as np
 from math import factorial
 from scipy.special import assoc_laguerre as lg
@@ -15,16 +17,17 @@ import src
 # from flask_restful import Api,Resource
 # ----------- Global Variables
 app = Flask(__name__)
-run_with_ngrok(app)
+# run_with_ngrok(app)
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = True
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///QantumComputingLab.db'
 app.config['SECRET_KEY'] = 'w276-T#treBxTpY7X-jZZ96@tAHHtw5F'
 db = SQLAlchemy(app)
+# Session(app)
 DEFAULT_IMG = 'img/default.jpg'
 TMP_IMG = 'img/tmp.bmp'
 UNSAVED = False
 SAVED = True
-
+# session['test']='session test'
 
 # ----------- BOT-ACTIVATION
 # ----------- Classes
@@ -60,33 +63,65 @@ class Superposition(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-    # TO-DO :
-    # add the scanning parameters(x,y)
-    # image
-    # loading option
+    def __init__(self):
+        self.height = 1080
+        self.width  = 1920
+        self.gussian_waist =100
+        self.radial_index =0
+        self.n_values = 1
+        self.values = [LG_Values(index=1,coefficient=2,parameter=2)]
+        self.h_shift = 10
+        self.v_shift = 10
+        self.blaze_period = 5
+        self.image = self.get_Superposition_image(
+        height = 1080,
+        width  = 1920,
+        w =100,
+        p =0,
+        values = [LG_Values(index=1,coefficient=2,parameter=2)],
+        h_shift = 10,
+        v_shift = 10,
+        bp = 5
+        )
     def __repr__(self):
         return f'''
         <{id}>
-        <{destination.id}>
-        <{gussian_waist}>
-        <{radial_index}>
-        <{n_values}>
-        <{values}>
-        <{h_shift}>
-        <{v_shift}>
-        <{blaze_period}>
-        <{date}>
+        <{self.destination}>
+        <{self.gussian_waist}>
+        <{self.radial_index}>
+        <{self.n_values}>
+        <{self.values}>
+        <{self.h_shift}>
+        <{self.v_shift}>
+        <{self.blaze_period}>
+        <{self.date}>
         '''
 
-    def get_LG_pairs(self,values=self.values):
+    def get_LG_pairs(self,values=None):
+        '''
+        @input:  
+        values=a list of Value 'obj'
+        @returns a list of Value pairs
+        '''
+        values = self.values if not values else values
         buffer = {t.index:(t.parameter,t.coefficient) for t in values}
         buffer_s = {k: buffer[k] for k in sorted(buffer)}
         return [buffer_s[i] for i in buffer_s]
 
     def getAxis(self,magnitute,shift):
+        '''
+        @input: 
+        magnitute=the length 
+        shift=shifting #unit
+        @returns
+        a symmetric vector of axis with length if "magnitute" and "shift" units shifted
+        '''
         return np.linspace(-1*magnitute/2+shift,magnitute/2+shift-1,magnitute)
 
     def car2polar(self,x,y):
+        '''
+        transforms Cartisian system into Polar system
+        '''
         rho = np.hypot(x,y)
         phi = np.arctan2(y, x)
         return rho, phi
@@ -102,38 +137,49 @@ class Superposition(db.Model):
 
     def lagurrelGussian(self,rho,phi,w,l,p):
         rho2w = rho/w
-        return N_PL(p,l)*np.power(np.sqrt(2)*rho2w,abs(l))*lg(2*np.power(rho2w,2),p,abs(l))*np.exp(-1*np.power(rho2w,2))*np.exp(complex(0,-1)*l*phi)
+        return self.N_PL(p,l)*np.power(np.sqrt(2)*rho2w,abs(l))*lg(2*np.power(rho2w,2),p,abs(l))*np.exp(-1*np.power(rho2w,2))*np.exp(complex(0,-1)*l*phi)
 
-    def get_Superposition(self,width=self.width,height=self.height,h_shift=self.h_shift,v_shift=self.v_shift,w=self.gussian_waist,p=self.radial_index,values=self.get_LG_pairs()):
-        x, y     = getAxis(width,h_shift),getAxis(height,v_shift)
+    def get_Superposition(self,width=None,height=None,h_shift=None,v_shift=None,w=None,p=None,values=None):
+        
+        width=self.width if not width else width
+        height=self.height if not height else height
+        h_shift=self.h_shift if not h_shift else h_shift
+        v_shift=self.v_shift if not v_shift else v_shift
+        w=self.gussian_waist if not w else w
+        p=self.radial_index if not p else p
+        values=self.get_LG_pairs()
+        x, y     = self.getAxis(width,h_shift),self.getAxis(height,v_shift)
         xv, yv   = np.meshgrid(x,y)
-        rho, phi = car2polar(xv,yv)
+        rho, phi = self.car2polar(xv,yv)
         out  = 0
         for m,n in values:
-            temp = n*lagurrelGussian(rho,phi,w,m,p)
+            temp = n*self.lagurrelGussian(rho,phi,w,m,p)
             out += temp  
         return out 
         
     
-    def get_Superposition_image(self,width=self.width,height=self.height,h_shift=self.h_shift,v_shift=self.v_shift,w=self.gussian_waist,p=self.radial_index,values=self.get_LG_pairs(),ri=self.radial_index,scale=255):
+    def get_Superposition_image(self,width=None,height=None,h_shift=None,v_shift=None,w=None,p=None,values=None,bp=None,scale=255):
+        width=self.width if not width else width
+        height=self.height if not height else height
+        h_shift=self.h_shift if not h_shift else h_shift
+        v_shift=self.v_shift if not v_shift else v_shift
+        w=self.gussian_waist if not w else w
+        p=self.radial_index if not p else p
+        values=self.get_LG_pairs() if not values else values
+        bp=self.blaze_period if not bp else bp
+
         out = self.get_Superposition(width,height,h_shift,v_shift,w,p,values)
-        x, y     = getAxis(width,h_shift),getAxis(height,v_shift)
+        x, y     = self.getAxis(width,h_shift),self.getAxis(height,v_shift)
         xv, yv   = np.meshgrid(x,y)
         amp   = np.absolute(out)
         phase = np.angle(out)
         amp=amp/np.amax(amp)
-        phase_mod = (phase+2*np.pi*xv/ri) % (2*np.pi)   
+        phase_mod = (phase+2*np.pi*xv/bp) % (2*np.pi)   
         result = amp*phase_mod
         scaled_result = result/result.max()*scale
         buf = BytesIO()
         plt.imsave(buf,scaled_result, cmap="gray",origin='lower', vmin = 0,vmax=scale,format="png")
         return base64.b64encode(buf.getbuffer()).decode("ascii")
-
-class Devices(db.Model):
-    __tablename__ = 'Devices'
-    id = db.Column(db.Integer, primary_key=True)
-    Superposition_id = Column(Integer, ForeignKey('Superposition.id'))
-    
 
 class LG_Values(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -144,15 +190,32 @@ class LG_Values(db.Model):
     def __repr__(self):
         return '<i={},p={},c={}>'.format(self.index, self.parameter,
                                          self.coefficient)
+
+class Devices(db.Model):
+    __tablename__ = 'Devices'
+    id = db.Column(db.Integer, primary_key=True)
+    Superposition_id = db.Column(db.Integer, db.ForeignKey('Superposition.id'))
+    name = db.Column(db.String(length=255))
+    ip_addr = db.Column(IPAddressType)
+    port = db.Column(db.Integer)
+    DeviceType_id = db.relationship('DeviceType', backref='Devices')
+    def get_devices():
+        pass
+    def rcv_data():
+        pass
+    def send_Data():
+        pass
+
+class DeviceType(db.Model):
+    __tablename__ = 'DeviceType'
+    id = db.Column(db.Integer, primary_key=True)
+    Device_id = db.Column(db.Integer, db.ForeignKey('Devices.id'))
+    dclass = db.Column(db.String(length=255))  
+
+    
+
 # ----------- Constants
-INIT_form = Superposition(id=0,
-                    gussianWaist=None,
-                    nValues=1,
-                    values=[Values(parameter=None, coefficient=None)],
-                    scanPos=None,
-                    scanRange=None,
-                    image=src.getB64string(
-                        open('static/img/default.jpg', 'rb').read()))
+INIT_form = Superposition()
 TMP_SP = Superposition()
 TMP_values = []
 
@@ -163,17 +226,14 @@ def index():
     if request.method == 'POST':
         return 'post'
     else:
-        history = History.query.order_by(History.date).all()
-        print(history)
-        # Clear the TMP image
-        return render_template('dashboard.html',
+        return render_template('dashboard/dashboard.html',
                                user = 'Ethan',
-                               history=history,
-                               preload=INIT_form,
+                               records=[],
+                               default=Superposition(),
                                devices=src.getDevices())
 
 
-@app.route('/plot', methods=['POST'])
+@app.route('/plot', methods=['POST','GET'])
 def plot():
     form = request.form
     content = {}
@@ -263,6 +323,10 @@ if __name__ == "__main__":
     src.welcome()
     # print(os.system(src.TUNNEL_CMD))
     # input('#### PRESS ANY KEY ####')
+    # print(session)
+    # i = Superposition()
+    # print(i)
+    app.debug=True
     app.run()
     # try:
     # except Exception as ex:
