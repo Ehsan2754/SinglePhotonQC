@@ -13,7 +13,9 @@ import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 from matplotlib.figure import Figure
-import src
+import src, detect_heds_module_path
+from holoeye import slmdisplaysdk
+
 # from flask_restful import Api,Resource
 # ----------- Global Variables
 app = Flask(__name__)
@@ -44,9 +46,9 @@ class Superposition(db.Model):
     # --- Width
     width  = db.Column(db.Integer, nullable=False)
     # --- Gaussian waist "W"
-    gussian_waist = db.Column(db.Float, nullable=False)
+    gussian_waist = db.Column(db.Integer, nullable=False)
     # --- Radial Index
-    radial_index = db.Column(db.Float, nullable=False)
+    radial_index = db.Column(db.Integer, nullable=False)
     # --- Number of parameters for LG
     n_values = db.Column(db.Integer, nullable=False)
     # --- Values for LG parameters
@@ -63,26 +65,17 @@ class Superposition(db.Model):
     date = db.Column(db.DateTime, default=datetime.utcnow)
 
 
-    def __init__(self):
-        self.height = 1080
-        self.width  = 1920
-        self.gussian_waist =100
-        self.radial_index =0
-        self.n_values = 1
-        self.values = [LG_Values(index=1,coefficient=2,parameter=2)]
-        self.h_shift = 10
-        self.v_shift = 10
-        self.blaze_period = 5
-        self.image = self.get_Superposition_image(
-        height = 1080,
-        width  = 1920,
-        w =100,
-        p =0,
-        values = [LG_Values(index=1,coefficient=2,parameter=2)],
-        h_shift = 10,
-        v_shift = 10,
-        bp = 5
-        )
+    def __init__(self,*args,**kwargs):
+        self.height = int(kwargs['height']) if 'height' in kwargs else 1080
+        self.width  = int(kwargs['width']) if 'width' in kwargs else 1920
+        self.gussian_waist = int(kwargs['gussian_waist']) if 'gussian_waist' in kwargs else 100
+        self.radial_index = int(kwargs['radial_index']) if 'radial_index' in kwargs else 0
+        self.n_values = int(kwargs['n_values']) if 'n_values' in kwargs else 1
+        self.values = kwargs['values'] if 'values' in kwargs else [LG_Values(index=0,coefficient=2,parameter=2)]
+        self.h_shift = int(kwargs['h_shift']) if 'h_shift' in kwargs else 10
+        self.v_shift = int(kwargs['v_shift']) if 'v_shift' in kwargs else 10
+        self.blaze_period = float(kwargs['blaze_period']) if 'blaze_period' in kwargs else 5
+        self.image = self.get_Superposition_image()
     def __repr__(self):
         return f'''
         <{id}>
@@ -186,7 +179,7 @@ class LG_Values(db.Model):
     Superposition_id = db.Column(db.Integer, db.ForeignKey('Superposition.id'))
     index = db.Column(db.Integer, nullable=False)
     coefficient = db.Column(db.Float, nullable=False)
-    parameter = db.Column(db.Float, nullable=False)
+    parameter = db.Column(db.Integer, nullable=False)
     def __repr__(self):
         return '<i={},p={},c={}>'.format(self.index, self.parameter,
                                          self.coefficient)
@@ -229,44 +222,21 @@ def index():
         return render_template('dashboard/dashboard.html',
                                user = 'Ethan',
                                records=[],
-                               default=Superposition(),
+                               default=Superposition(gussian_waist=0),
                                devices=src.getDevices())
 
 
 @app.route('/plot', methods=['POST','GET'])
 def plot():
-    form = request.form
-    content = {}
-    for item in form:
-        content[item] = form[item]
-    global TMP_history
-    global TMP_values
-    TMP_values.clear()
-    TMP_history = History(gussianWaist=float(content['w']),
-                          nValues=int(content['nLG']),
-                          scanPos=int(content['ScPo']),
-                          scanRange=int(content['ScRa']),
-                          status=UNSAVED)
-    for i in range(int(content['nLG'])):
-        TMP_values.append(
-            Values(index=int(i + 1),
-                   coefficient=float(content.pop('C{}'.format(i + 1))),
-                   parameter=float(content.pop('LG{}'.format(i + 1))),
-                   owner=TMP_history,
-                   status=UNSAVED))
-    # TODO:
-    # *Image Creation
-    TMP_history.processImage()
-    print(TMP_history)
-    history = History.query.order_by(History.date).all()
-    # TODO :
-    # IMAGE STRUCTURE
-    # REDIRECTION
-    # BASE64 format or BMP
-    return render_template('dashboard.html',
-                           history=history,
-                           preload=TMP_history,
-                           devices=src.getDevices())
+    if request.method == 'POST':
+        session['form']=request.form
+        session['user']='Ehsan'
+        session['records']=[]
+        session['devices']=src.getDevices()
+        default = Superposition(**src.normalizeValues(request.form))
+        return render_template('dashboard/dashboard.html',
+            **session,
+            default=default)
 
 
 @app.route('/delete/<int:id>')
@@ -289,23 +259,25 @@ def load(id):
 
 @app.route('/slm', methods=['POST'])
 def slm():
-    global TMP_history
-    global TMP_values
-    TMP_history.dest = str(request.form['slm'])
-    print(TMP_history)
+    form = src.normalizeValues(session['form'])
+    form['destination']= Devices(name=request.form['slm'])
+    print(form['destination'])
+    default = Superposition(**form)
     try:
-        if(TMP_history.status == UNSAVED):
-            db.session.add(TMP_history)
-            for item in TMP_values:
-                db.session.add(item)
-            db.session.commit()
-        history = History.query.order_by(History.date).all()
-        return render_template('dashboard.html',
-                           history=history,
-                           preload=TMP_history,
-                           devices=src.getDevices())
-    except:
-            return 'Ooops ... 502 BAD GATEWAY'
+        with open('data/plot.png', 'wb') as file_to_save:
+            file_to_save.write(base64.b64decode(default.image))
+        ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
+        ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
+        slm = slmdisplaysdk.SLMDisplay()
+        thisScriptPath = os.path.dirname(__file__)
+        print(thisScriptPath)
+        filename = os.path.join(thisScriptPath, "data", "plot.png")
+        error = slm.showDataFromFile(filename, ShowFlags.PresentAutomatic)
+        return render_template('dashboard/dashboard.html',
+            **session,
+            default=default)
+    except Exception as ex:
+            return 'Ooops ... 502 BAD GATEWAY'+str(ex)
 
 
 @app.route('/refreshSLM')
