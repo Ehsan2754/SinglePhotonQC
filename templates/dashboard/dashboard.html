@@ -69,7 +69,7 @@ Dashboard
                 </script>
             </div>
             <div id="column2">
-                <img width="100%" height="100%" src= "data:image/png;base64,{{ default.image }}"
+                <img id='superposition' src= "data:image/png;base64,{{ default.image }}"
                 onerror=" this.onerror=null; this.src=`{{ url_for( 'static' , filename = 'img/default.jpg') }}`; "/>
             </div>
         </section>
@@ -79,7 +79,8 @@ Dashboard
                     {% if devices|length < 1 %} <h5> No devices found. </h5>
                     {% else %}
                     <label for="slm">Choose a SLM device:</label>
-                    <select style="width: 48%;" id="slm" name="slm">
+                    <br>
+                    <select style="width: 100%;" id="slm" name="slm">
                         {% for item in devices %}
                         <option value="{{item}}">{{item}}</option>
                         {% endfor %}

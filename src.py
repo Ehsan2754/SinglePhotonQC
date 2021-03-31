@@ -15,7 +15,7 @@ def welcome():
     print('$$$   Ehsan2754@yahoo.com  $$$')
     print('$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$')
 def getDevices():
-    return [1,2,3]
+    return ['HOLOEYE-PLUTO2']
 def getB64string(bin):
     return base64.b64encode(bin)
 def getAxis(magnitute,shift):
@@ -28,3 +28,10 @@ def lagurrelGussian(percision,shift):
     return output
 def getSuperPosition():
     pass
+
+from main import LG_Values 
+def normalizeValues(form):
+    t = {key:form[key] for key in form}
+    values = [ LG_Values(index=i,coefficient=float(t.pop('C'+str(i))),parameter=int(t.pop('LG'+str(i)))) for i in range(1,int(t['n_values'])+1)]
+    t['values']=values
+    return t
