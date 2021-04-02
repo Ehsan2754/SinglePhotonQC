@@ -256,18 +256,19 @@ def load(id):
 def slm():
     try:
 
+        ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
+        ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
         slm = slmdisplaysdk.SLMDisplay()
+        size=slmdisplaysdk()
         form = src.normalizeValues(session['form'])
         form['destination']= Devices(name=request.form['slm'])
         print(form['destination'])
-        form["width"] = slm.width_px
-        form["height"] = slm.height_px
+        form["width"] =  slm.width_px #or 1920
+        form["height"] = slm.height_px #or 1080
         default = Superposition(**form)
         data=default.get_Superposition()
-        print("dataWidth = " + str(form["width"]))
-        print("dataHeight = " + str(form["height"]))
-        ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
-        ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
+        print("dataWidth = " + str(slm.width_px))
+        print("dataHeight = " + str(slm.height_px))
         error = slm.showData(data)
         return render_template('dashboard/dashboard.html',
             **session,
