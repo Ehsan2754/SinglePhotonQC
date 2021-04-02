@@ -160,7 +160,7 @@ class Superposition(db.Model):
         phase_mod = (phase+2*np.pi*xv/bp) % (2*np.pi)   
         result = amp*phase_mod
         scaled_result= result/result.max()*scale
-        return scaled_result 
+        return scaled_result.astype(np.uint8) 
         
     
     def get_Superposition_image(self):
@@ -259,6 +259,7 @@ def slm():
         ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
         ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
         slm = slmdisplaysdk.SLMDisplay()
+        error = slm.open()
         form = src.normalizeValues(session['form'])
         form['destination']= Devices(name=request.form['slm'])
         print(form['destination'])
