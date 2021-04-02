@@ -259,7 +259,6 @@ def slm():
         ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
         ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
         slm = slmdisplaysdk.SLMDisplay()
-        size=slmdisplaysdk()
         form = src.normalizeValues(session['form'])
         form['destination']= Devices(name=request.form['slm'])
         print(form['destination'])
