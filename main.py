@@ -165,8 +165,8 @@ class Superposition(db.Model):
         x, y     = self.getAxis(width,h_shift),self.getAxis(height,v_shift)
         xv, yv   = np.meshgrid(x,y)
         amp   = np.absolute(out)
-        phase = np.angle(out)
         amp=amp/np.amax(amp)
+        phase = np.angle(out)  - np.pi*amp
         phase_mod = (phase+2*np.pi*xv/bp) % (2*np.pi)   
         result = amp*phase_mod
         scaled_result = result/result.max()*scale
