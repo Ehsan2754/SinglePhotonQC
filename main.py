@@ -53,12 +53,14 @@ class Superposition(db.Model):
     n_values = db.Column(db.Integer, nullable=False)
     # --- Values for LG parameters
     values = db.relationship('LG_Values', backref='Superposition')
-    # --- Scanning position
+    # --- Horizontal shift
     h_shift = db.Column(db.Integer, nullable=False)
-    # --- Scanning range
+    # --- Vertical Shift
     v_shift = db.Column(db.Integer, nullable=False)
     # --- Blaze Period
     blaze_period = db.Column(db.Float)
+    # --- Scanning range
+    scale = db.Column(db.Integer, nullable=False)
     # --- Image file
     image = db.Column(db.LargeBinary)
     # --- Creation date
@@ -75,6 +77,7 @@ class Superposition(db.Model):
         self.h_shift = int(kwargs['h_shift']) if 'h_shift' in kwargs else 10
         self.v_shift = int(kwargs['v_shift']) if 'v_shift' in kwargs else 10
         self.blaze_period = float(kwargs['blaze_period']) if 'blaze_period' in kwargs else 5
+        self.scale = float(kwargs['scale']) if 'scale' in kwargs else 0xff
         self.image = self.get_Superposition_image()
     def __repr__(self):
         return f'''
@@ -87,6 +90,7 @@ class Superposition(db.Model):
         <{self.h_shift}>
         <{self.v_shift}>
         <{self.blaze_period}>
+        <{self.scale}>
         <{self.date}>
         '''
 
@@ -132,7 +136,7 @@ class Superposition(db.Model):
         rho2w = rho/w
         return self.N_PL(p,l)*np.power(np.sqrt(2)*rho2w,abs(l))*lg(2*np.power(rho2w,2),p,abs(l))*np.exp(-1*np.power(rho2w,2))*np.exp(complex(0,-1)*l*phi)
 
-    def get_Superposition(self,width=None,height=None,h_shift=None,v_shift=None,w=None,p=None,values=None):
+    def get_Superposition(self,width=None,height=None,h_shift=None,v_shift=None,w=None,p=None,values=None,bp=None,scale=None):
         
         width=self.width if not width else width
         height=self.height if not height else height
@@ -141,6 +145,8 @@ class Superposition(db.Model):
         w=self.gussian_waist if not w else w
         p=self.radial_index if not p else p
         values=self.get_LG_pairs()
+        bp = self.blaze_period if not bp else bp
+        scale = self.scale if not scale else scale
         x, y     = self.getAxis(width,h_shift),self.getAxis(height,v_shift)
         xv, yv   = np.meshgrid(x,y)
         rho, phi = self.car2polar(xv,yv)
@@ -148,30 +154,19 @@ class Superposition(db.Model):
         for m,n in values:
             temp = n*self.lagurrelGussian(rho,phi,w,m,p)
             out += temp  
-        return out 
-        
-    
-    def get_Superposition_image(self,width=None,height=None,h_shift=None,v_shift=None,w=None,p=None,values=None,bp=None,scale=255):
-        width=self.width if not width else width
-        height=self.height if not height else height
-        h_shift=self.h_shift if not h_shift else h_shift
-        v_shift=self.v_shift if not v_shift else v_shift
-        w=self.gussian_waist if not w else w
-        p=self.radial_index if not p else p
-        values=self.get_LG_pairs() if not values else values
-        bp=self.blaze_period if not bp else bp
-
-        out = self.get_Superposition(width,height,h_shift,v_shift,w,p,values)
-        x, y     = self.getAxis(width,h_shift),self.getAxis(height,v_shift)
-        xv, yv   = np.meshgrid(x,y)
         amp   = np.absolute(out)
         amp=amp/np.amax(amp)
         phase = np.angle(out)  - np.pi*amp
         phase_mod = (phase+2*np.pi*xv/bp) % (2*np.pi)   
         result = amp*phase_mod
-        scaled_result = result/result.max()*scale
+        scaled_result= result/result.max()*scale
+        return scaled_result 
+        
+    
+    def get_Superposition_image(self):
+        out = self.get_Superposition()
         buf = BytesIO()
-        plt.imsave(buf,scaled_result, cmap="gray",origin='lower', vmin = 0,vmax=scale,format="png")
+        plt.imsave(buf,out, cmap="gist_gray", vmin = 0,vmax=self.scale,format="png")
         return base64.b64encode(buf.getbuffer()).decode("ascii")
 
 class LG_Values(db.Model):
@@ -259,20 +254,21 @@ def load(id):
 
 @app.route('/slm', methods=['POST'])
 def slm():
-    form = src.normalizeValues(session['form'])
-    form['destination']= Devices(name=request.form['slm'])
-    print(form['destination'])
-    default = Superposition(**form)
     try:
-        with open('data/plot.png', 'wb') as file_to_save:
-            file_to_save.write(base64.b64decode(default.image))
+
+        slm = slmdisplaysdk.SLMDisplay()
+        form = src.normalizeValues(session['form'])
+        form['destination']= Devices(name=request.form['slm'])
+        print(form['destination'])
+        form["width"] = slm.width_px
+        form["height"] = slm.height_px
+        default = Superposition(**form)
+        data=Superposition.get_Superposition()
+        print("dataWidth = " + str(form["width"]))
+        print("dataHeight = " + str(form["height"]))
         ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
         ShowFlags = slmdisplaysdk.SLMDisplay.ShowFlags
-        slm = slmdisplaysdk.SLMDisplay()
-        thisScriptPath = os.path.dirname(__file__)
-        print(thisScriptPath)
-        filename = os.path.join(thisScriptPath, "data", "plot.png")
-        error = slm.showDataFromFile(filename, ShowFlags.PresentAutomatic)
+        error = slm.showData(data)
         return render_template('dashboard/dashboard.html',
             **session,
             default=default)
