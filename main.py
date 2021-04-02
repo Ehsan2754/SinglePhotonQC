@@ -263,7 +263,7 @@ def slm():
         form["width"] = slm.width_px
         form["height"] = slm.height_px
         default = Superposition(**form)
-        data=Superposition.get_Superposition()
+        data=default.get_Superposition()
         print("dataWidth = " + str(form["width"]))
         print("dataHeight = " + str(form["height"]))
         ErrorCode = slmdisplaysdk.SLMDisplay.ErrorCode
