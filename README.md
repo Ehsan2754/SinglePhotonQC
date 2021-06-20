@@ -1,4 +1,4 @@
-# PLUTO2
+# SinglePhoton QC
 ### Kazan Scientific Center of the Russian Academy of Sciences 
 
-Spirtal Light Module Data Transfer
+Labaratory Experimentatal Set Web Server
