@@ -1,0 +1,140 @@
+{% extends 'base.html' %}
+{% block title%}
+Dashboard
+{% endblock %}
+
+{% block body%}
+<div class="form">
+    <header id="header">
+        <h1>Single Photon QC Laboratory</h1>
+        <h2>{{user}}'s Dashboard</h2>
+    </header>
+    <main>
+        <section>
+            <div id="column1">
+                <form action="/plot" method="POST">
+                    <div style="padding: 2%;">
+                        <label>Gaussian Waist</label>
+                        <input type="number" name="gussian_waist" placeholder="Gaussian Waist" required="required" step="any" value="{{ default.gussian_waist }}" />
+                        <label>Radial Index</label>
+                        <input type="number" name="radial_index" placeholder="Radial Index" required="required" step="any" value="{{ default.radial_index }}" />
+                        <label>Blaze Period</label>
+                        <input type="number" name="blaze_period" placeholder="Blaze Period" required="required" step="any" value="{{ default.blaze_period }}" />
+                        <label>#Lagurrel-Gussian parameters</label>
+                        <input type="number" name="n_values" placeholder="#Lagurrel-Gussian parameter" required="required"
+                            value="{{ default.n_values }}" min="1" id="n_values" />
+                        <label>Lagurrel-Gussian Values</label>
+                    </div>
+                    <div id="parm">
+                        {% if default.n_values < 1 %} <h5> Invalid quantity of parameters.</h5>
+                            {% else %}
+                            {% for item in range(default.n_values): %}
+                            <input type="number" 
+                                name="LG{{ item+1 }}" 
+                                placeholder="L-G parameter{{ item+1 }}" 
+                                required="required" 
+                                step="any"
+                                value="{{ default.values[item].parameter }}" />
+                                <br>
+                            <input type="number"
+                                name="C{{ item+1 }}"
+                                placeholder="L-G Coefficient{{ item+1 }}"
+                                required="required"
+                                step="any"
+                                value="{{ default.values[item].coefficient }}" />
+                                <br>
+                            {% endfor %}
+                            {% endif %}
+                    </div>
+                    <label>Vertical Shift</label>
+                    <input type="number" name="v_shift" placeholder="Vertical Shift" required="required" value="{{ default.v_shift }}" id="v_shift" />
+                    <label>Horizontal Shift</label>
+                    <input type="number" name="h_shift" placeholder="Horizontal Shift" required="required" value="{{ default.h_shift }}" id="h_shift"/>
+                    <label>Contrast scale</label>
+                    <input type="number" name="scale" placeholder="Contrast scale" required="required" value="{{ default.scale }}" id="scale"/>
+                    <button type="submit" class="btn btn-primary btn-block btn-large">Plot</button>
+
+                </form>
+                <script>
+
+                    document.getElementById("n_values").onchange = function () {
+                        document.getElementById("parm").innerHTML = ''
+                        for (i = 0; i < document.getElementById("n_values").value; i++) {
+                            document.getElementById("parm").innerHTML += `
+                        <input type="number" name="LG${i + 1}" placeholder="L-G parameter${i + 1}"  step="any" required="required" />
+                        <br>
+                        <input type="number" name="C${i + 1}" placeholder="L-G Coefficient${i + 1}" step="any" required="required" />
+                        <br>
+                        `
+                        }
+                    };
+                </script>
+            </div>
+            <div id="column2">
+                <img id='superposition' src= "data:image/png;base64,{{ default.image }}"
+                onerror=" this.onerror=null; this.src=`{{ url_for( 'static' , filename = 'img/default.jpg') }}`; "/>
+            </div>
+        </section>
+        <section>
+            <div class="column1">
+                <form action='/slm' method="POST">
+                    {% if devices|length < 1 %} <h5> No devices found. </h5>
+                    {% else %}
+                    <label for="slm">Choose a SLM device:</label>
+                    <br>
+                    <select style="width: 100%;" id="slm" name="slm">
+                        {% for item in devices %}
+                        <option value="{{item}}">{{item}}</option>
+                        {% endfor %}
+                    </select>
+                    {% endif %}
+                    <button action="\slm"  method="POST" type="submit" class="btn btn-primary btn-block btn-large">Upload to
+                        SLM </button>
+                    <a method="POST" href='\refreshSLM' class="btn btn-primary btn-block btn-large">Refresh</a>
+                </form>
+            </div>
+            <div class="column2"> {% if records|length < 1 %} <h5> No Logged information. </h5>
+                    {% else %}
+                    <table>
+                        <tr>
+                            <th>ID</th>
+                            <th>Destionation</th>
+                            <th>Gaussian Waist</th>
+                            <th>Radial Index</th>
+                            <th>Blaze Period</th>
+                            <th>#L-G parameters</th>
+                            <th>L-G parameters</th>
+                            <th>Scanning Postion</th>
+                            <th>Scanning Scroll</th>
+                            <th>Created Date</th>
+                            <th>Actions</th>
+                        </tr>
+                        {% for item in records: %}
+                        <tr>
+                            <td>{{ item.id }}</td>
+                            <td>{{ item.dest }}</td>
+                            <td>{{ item.gussianWaist }}</td>
+                            <td>{{ item.radial_index }}</td>
+                            <td>{{ item.blaze_period }}</td>
+                            <td>{{ item.nValues }}</td>
+                            <td>{{ item.values }}</td>
+                            <td>{{ item.scanPos }}</td>
+                            <td>{{ item.scanRange }}</td>
+                            <td>{{ item.date.date() }}</td>
+                            <td>
+                                <!-- <button class="btn btn-primary btn-block btn-large">Load</button> <br> -->
+                                <a href="/load/{{ item.id }}">Load</a>
+                                <a href="/delete/{{ item.id }}">Delete</a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </table>
+                    {% endif %}</div>
+        </section>
+    </main>
+
+    Ehsan Shaghaei<br>
+    <a href="https://github.com/Ehsan2754/PLUTO2">Github Repository</a><br>
+    <a href="mailto:Ehsan2754@yahoo.com">Ehsan2754@yahoo.com</a>
+</div>
+{% endblock %}
