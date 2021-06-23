@@ -10,13 +10,12 @@ import numpy as np
 from math import factorial
 from scipy.special import assoc_laguerre as lg
 import matplotlib.pyplot as plt
-from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-from matplotlib.figure import Figure
 
 
-from app.holoeye import detect_heds_module_path, slmdisplaysdk
 
+from app.holoeye import slmdisplaysdk
+from app import  detect_heds_module_path
 
 
 DEFAULT_IMG = 'img/default.jpg'

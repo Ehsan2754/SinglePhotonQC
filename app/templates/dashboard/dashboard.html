@@ -92,6 +92,7 @@ Dashboard
                         SLM </button>
                     <a method="POST" href='\refreshSLM' class="btn btn-primary btn-block btn-large">Refresh</a>
                 </form>
+                <form action="/ccd" method="GET"><button type="submit" class="btn btn-primary btn-block btn-large" method="GET">Monitor CCD</button></form>
             </div>
             <div class="column2"> {% if records|length < 1 %} <h5> No Logged information. </h5>
                     {% else %}

@@ -1,10 +1,12 @@
 
 
-from flask import  render_template, url_for, request, redirect,session
+from flask import  render_template, url_for, request, redirect,session, Response
 from flask_ngrok import run_with_ngrok
 from app import app
 from app.models.dataModel import Superposition ,LG_Values,Devices
-from app.holoeye import detect_heds_module_path, slmdisplaysdk
+
+from app.holoeye import slmdisplaysdk
+from app import  detect_heds_module_path
 from app import src
 
 # ----------- Constants
@@ -85,6 +87,9 @@ def slm():
     except Exception as ex:
             return 'Ooops ... 502 BAD GATEWAY'+str(ex)
 
+@app.route('/ccd')
+def ccd():
+    return Response(src.gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 @app.route('/refreshSLM')
 def refreshSLM():
